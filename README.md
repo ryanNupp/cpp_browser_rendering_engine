@@ -4,4 +4,4 @@ Modern C++ browser rendering engine - WIP
 Currently implementing:
 HTML parser / DOM tree builder
 
-WHATWG spec-compliant: html.spec.whatwg.org
+[WHATWG HTML5](https://html.spec.whatwg.org/) spec-compliant
