@@ -14,246 +14,87 @@ HTMLTokenizer::HTMLTokenizer(InputStream& t_input_stream, HTMLTreeBuilder& t_tre
 void HTMLTokenizer::get_next_token()
 {
     switch (m_curr_state) {
-    case State::Data:
-        Data_handler();
-        break;
-    case State::RCDATA:
-        RCDATA_handler();
-        break;
-    case State::RAWTEXT:
-        RAWTEXT_handler();
-        break;
-    case State::ScriptData:
-        ScriptData_handler();
-        break;
-    case State::PLAINTEXT:
-        PLAINTEXT_handler();
-        break;
-    case State::TagOpen:
-        TagOpen_handler();
-        break;
-    case State::EndTagOpen:
-        EndTagOpen_handler();
-        break;
-    case State::TagName:
-        TagName_handler();
-        break;
-    case State::RCDATALessThanSign:
-        RCDATALessThanSign_handler();
-        break;
-    case State::RCDATAEndTagOpen:
-        RCDATAEndTagOpen_handler();
-        break;
-    case State::RCDATAEndTagName:
-        RCDATAEndTagName_handler();
-        break;
-    case State::RAWTEXTLessThanSign:
-        RAWTEXTLessThanSign_handler();
-        break;
-    case State::RAWTEXTEndTagOpen:
-        RAWTEXTEndTagOpen_handler();
-        break;
-    case State::RAWTEXTEndTagName:
-        RAWTEXTEndTagName_handler();
-        break;
-    case State::ScriptDataLessThanSign:
-        ScriptDataLessThanSign_handler();
-        break;
-    case State::ScriptDataEndTagOpen:
-        ScriptDataEndTagOpen_handler();
-        break;
-    case State::ScriptDataEndTagName:
-        ScriptDataEndTagName_handler();
-        break;
-    case State::ScriptDataEscapeStart:
-        ScriptDataEscapeStart_handler();
-        break;
-    case State::ScriptDataEscapeStartDash:
-        ScriptDataEscapeStartDash_handler();
-        break;
-    case State::ScriptDataEscaped:
-        ScriptDataEscaped_handler();
-        break;
-    case State::ScriptDataEscapedDash:
-        ScriptDataEscapedDash_handler();
-        break;
-    case State::ScriptDataEscapedDashDash:
-        ScriptDataEscapedDashDash_handler();
-        break;
-    case State::ScriptDataEscapedLessThanSign:
-        ScriptDataEscapedLessThanSign_handler();
-        break;
-    case State::ScriptDataEscapedEndTagOpen:
-        ScriptDataEscapedEndTagOpen_handler();
-        break;
-    case State::ScriptDataEscapedEndTagName:
-        ScriptDataEscapedEndTagName_handler();
-        break;
-    case State::ScriptDataDoubleEscapeStart:
-        ScriptDataDoubleEscapeStart_handler();
-        break;
-    case State::ScriptDataDoubleEscaped:
-        ScriptDataDoubleEscaped_handler();
-        break;
-    case State::ScriptDataDoubleEscapedDash:
-        ScriptDataDoubleEscapedDash_handler();
-        break;
-    case State::ScriptDataDoubleEscapedDashDash:
-        ScriptDataDoubleEscapedDashDash_handler();
-        break;
-    case State::ScriptDataDoubleEscapedLessThanSign:
-        ScriptDataDoubleEscapedLessThanSign_handler();
-        break;
-    case State::ScriptDataDoubleEscapeEnd:
-        ScriptDataDoubleEscapeEnd_handler();
-        break;
-    case State::BeforeAttributeName:
-        BeforeAttributeName_handler();
-        break;
-    case State::AttributeName:
-        AttributeName_handler();
-        break;
-    case State::AfterAttributeName:
-        AfterAttributeName_handler();
-        break;
-    case State::BeforeAttributeValue:
-        BeforeAttributeValue_handler();
-        break;
-    case State::AttributeValueDoubleQuoted:
-        AttributeValueDoubleQuoted_handler();
-        break;
-    case State::AttributeValueSingleQuoted:
-        AttributeValueSingleQuoted_handler();
-        break;
-    case State::AttributeValueUnquoted:
-        AttributeValueUnquoted_handler();
-        break;
-    case State::AfterAttributeValueQuoted:
-        AfterAttributeValueQuoted_handler();
-        break;
-    case State::SelfClosingStartTag:
-        SelfClosingStartTag_handler();
-        break;
-    case State::BogusComment:
-        BogusComment_handler();
-        break;
-    case State::MarkupDeclarationOpen:
-        MarkupDeclarationOpen_handler();
-        break;
-    case State::CommentStart:
-        CommentStart_handler();
-        break;
-    case State::CommentStartDash:
-        CommentStartDash_handler();
-        break;
-    case State::Comment:
-        Comment_handler();
-        break;
-    case State::CommentLessThanSign:
-        CommentLessThanSign_handler();
-        break;
-    case State::CommentLessThanSignBang:
-        CommentLessThanSignBang_handler();
-        break;
-    case State::CommentLessThanSignBangDash:
-        CommentLessThanSignBangDash_handler();
-        break;
-    case State::CommentLessThanSignBangDashDash:
-        CommentLessThanSignBangDashDash_handler();
-        break;
-    case State::CommentEndDash:
-        CommentEndDash_handler();
-        break;
-    case State::CommentEnd:
-        CommentEnd_handler();
-        break;
-    case State::CommentEndBang:
-        CommentEndBang_handler();
-        break;
-    case State::DOCTYPE:
-        DOCTYPE_handler();
-        break;
-    case State::BeforeDOCTYPEName:
-        BeforeDOCTYPEName_handler();
-        break;
-    case State::DOCTYPEName:
-        DOCTYPEName_handler();
-        break;
-    case State::AfterDOCTYPEName:
-        AfterDOCTYPEName_handler();
-        break;
-    case State::AfterDOCTYPEPublicKeyword:
-        AfterDOCTYPEPublicKeyword_handler();
-        break;
-    case State::BeforeDOCTYPEPublicIdentifier:
-        BeforeDOCTYPEPublicIdentifier_handler();
-        break;
-    case State::DOCTYPEPublicIdentifierDoubleQuoted:
-        DOCTYPEPublicIdentifierDoubleQuoted_handler();
-        break;
-    case State::DOCTYPEPublicIdentifierSingleQuoted:
-        DOCTYPEPublicIdentifierSingleQuoted_handler();
-        break;
-    case State::AfterDOCTYPEPublicIdentifier:
-        AfterDOCTYPEPublicIdentifier_handler();
-        break;
-    case State::BetweenDOCTYPEPublicAndSystemIdentifiers:
-        BetweenDOCTYPEPublicAndSystemIdentifiers_handler();
-        break;
-    case State::AfterDOCTYPESystemKeyword:
-        AfterDOCTYPESystemKeyword_handler();
-        break;
-    case State::BeforeDOCTYPESystemIdentifier:
-        BeforeDOCTYPESystemIdentifier_handler();
-        break;
-    case State::DOCTYPESystemIdentifierDoubleQuoted:
-        DOCTYPESystemIdentifierDoubleQuoted_handler();
-        break;
-    case State::DOCTYPESystemIdentifierSingleQuoted:
-        DOCTYPESystemIdentifierSingleQuoted_handler();
-        break;
-    case State::AfterDOCTYPESystemIdentifier:
-        AfterDOCTYPESystemIdentifier_handler();
-        break;
-    case State::BogusDOCTYPE:
-        BogusDOCTYPE_handler();
-        break;
-    case State::CDATASection:
-        CDATASection_handler();
-        break;
-    case State::CDATASectionBracket:
-        CDATASectionBracket_handler();
-        break;
-    case State::CDATASectionEnd:
-        CDATASectionEnd_handler();
-        break;
-    case State::CharacterReference:
-        CharacterReference_handler();
-        break;
-    case State::NamedCharacterReference:
-        NamedCharacterReference_handler();
-        break;
-    case State::AmbiguousAmpersand:
-        AmbiguousAmpersand_handler();
-        break;
-    case State::NumericCharacterReference:
-        NumericCharacterReference_handler();
-        break;
-    case State::HexadecimalCharacterReferenceStart:
-        HexadecimalCharacterReferenceStart_handler();
-        break;
-    case State::DecimalCharacterReferenceStart:
-        DecimalCharacterReferenceStart_handler();
-        break;
-    case State::HexadecimalCharacterReference:
-        HexadecimalCharacterReference_handler();
-        break;
-    case State::DecimalCharacterReference:
-        DecimalCharacterReference_handler();
-        break;
-    case State::NumericCharacterReferenceEnd:
-        NumericCharacterReferenceEnd_handler();
-        break;
+
+    case State::Data:   Data_handler();   break;
+    case State::RCDATA:   RCDATA_handler();   break;
+    case State::RAWTEXT:   RAWTEXT_handler();   break;
+    case State::ScriptData:   ScriptData_handler();   break;
+    case State::PLAINTEXT:   PLAINTEXT_handler();   break;
+    case State::TagOpen:   TagOpen_handler();   break;
+    case State::EndTagOpen:   EndTagOpen_handler();   break;
+    case State::TagName:   TagName_handler();   break;
+    case State::RCDATALessThanSign:   RCDATALessThanSign_handler();   break;
+    case State::RCDATAEndTagOpen:   RCDATAEndTagOpen_handler();   break;
+    case State::RCDATAEndTagName:   RCDATAEndTagName_handler();   break;
+    case State::RAWTEXTLessThanSign:   RAWTEXTLessThanSign_handler();   break;
+    case State::RAWTEXTEndTagOpen:   RAWTEXTEndTagOpen_handler();   break;
+    case State::RAWTEXTEndTagName:   RAWTEXTEndTagName_handler();   break;
+    case State::ScriptDataLessThanSign:   ScriptDataLessThanSign_handler();   break;
+    case State::ScriptDataEndTagOpen:   ScriptDataEndTagOpen_handler();   break;
+    case State::ScriptDataEndTagName:   ScriptDataEndTagName_handler();   break;
+    case State::ScriptDataEscapeStart:   ScriptDataEscapeStart_handler();   break;
+    case State::ScriptDataEscapeStartDash:   ScriptDataEscapeStartDash_handler();   break;
+    case State::ScriptDataEscaped:   ScriptDataEscaped_handler();   break;
+    case State::ScriptDataEscapedDash:   ScriptDataEscapedDash_handler();   break;
+    case State::ScriptDataEscapedDashDash:   ScriptDataEscapedDashDash_handler();   break;
+    case State::ScriptDataEscapedLessThanSign:   ScriptDataEscapedLessThanSign_handler();   break;
+    case State::ScriptDataEscapedEndTagOpen:   ScriptDataEscapedEndTagOpen_handler();   break;
+    case State::ScriptDataEscapedEndTagName:   ScriptDataEscapedEndTagName_handler();   break;
+    case State::ScriptDataDoubleEscapeStart:   ScriptDataDoubleEscapeStart_handler();   break;
+    case State::ScriptDataDoubleEscaped:   ScriptDataDoubleEscaped_handler();   break;
+    case State::ScriptDataDoubleEscapedDash:   ScriptDataDoubleEscapedDash_handler();   break;
+    case State::ScriptDataDoubleEscapedDashDash:   ScriptDataDoubleEscapedDashDash_handler();   break;
+    case State::ScriptDataDoubleEscapedLessThanSign:   ScriptDataDoubleEscapedLessThanSign_handler();   break;
+    case State::ScriptDataDoubleEscapeEnd:   ScriptDataDoubleEscapeEnd_handler();   break;
+    case State::BeforeAttributeName:   BeforeAttributeName_handler();   break;
+    case State::AttributeName:   AttributeName_handler();   break;
+    case State::AfterAttributeName:   AfterAttributeName_handler();   break;
+    case State::BeforeAttributeValue:   BeforeAttributeValue_handler();   break;
+    case State::AttributeValueDoubleQuoted:   AttributeValueDoubleQuoted_handler();   break;
+    case State::AttributeValueSingleQuoted:   AttributeValueSingleQuoted_handler();   break;
+    case State::AttributeValueUnquoted:   AttributeValueUnquoted_handler();   break;
+    case State::AfterAttributeValueQuoted:   AfterAttributeValueQuoted_handler();   break;
+    case State::SelfClosingStartTag:   SelfClosingStartTag_handler();   break;
+    case State::BogusComment:   BogusComment_handler();   break;
+    case State::MarkupDeclarationOpen:   MarkupDeclarationOpen_handler();   break;
+    case State::CommentStart:   CommentStart_handler();   break;
+    case State::CommentStartDash:   CommentStartDash_handler();   break;
+    case State::Comment:   Comment_handler();   break;
+    case State::CommentLessThanSign:   CommentLessThanSign_handler();   break;
+    case State::CommentLessThanSignBang:   CommentLessThanSignBang_handler();   break;
+    case State::CommentLessThanSignBangDash:   CommentLessThanSignBangDash_handler();   break;
+    case State::CommentLessThanSignBangDashDash:   CommentLessThanSignBangDashDash_handler();   break;
+    case State::CommentEndDash:   CommentEndDash_handler();   break;
+    case State::CommentEnd:   CommentEnd_handler();   break;
+    case State::CommentEndBang:   CommentEndBang_handler();   break;
+    case State::DOCTYPE:   DOCTYPE_handler();   break;
+    case State::BeforeDOCTYPEName:   BeforeDOCTYPEName_handler();   break;
+    case State::DOCTYPEName:   DOCTYPEName_handler();   break;
+    case State::AfterDOCTYPEName:   AfterDOCTYPEName_handler();   break;
+    case State::AfterDOCTYPEPublicKeyword:   AfterDOCTYPEPublicKeyword_handler();   break;
+    case State::BeforeDOCTYPEPublicIdentifier:   BeforeDOCTYPEPublicIdentifier_handler();   break;
+    case State::DOCTYPEPublicIdentifierDoubleQuoted:   DOCTYPEPublicIdentifierDoubleQuoted_handler();   break;
+    case State::DOCTYPEPublicIdentifierSingleQuoted:   DOCTYPEPublicIdentifierSingleQuoted_handler();   break;
+    case State::AfterDOCTYPEPublicIdentifier:   AfterDOCTYPEPublicIdentifier_handler();   break;
+    case State::BetweenDOCTYPEPublicAndSystemIdentifiers:   BetweenDOCTYPEPublicAndSystemIdentifiers_handler();   break;
+    case State::AfterDOCTYPESystemKeyword:   AfterDOCTYPESystemKeyword_handler();   break;
+    case State::BeforeDOCTYPESystemIdentifier:   BeforeDOCTYPESystemIdentifier_handler();   break;
+    case State::DOCTYPESystemIdentifierDoubleQuoted:   DOCTYPESystemIdentifierDoubleQuoted_handler();   break;
+    case State::DOCTYPESystemIdentifierSingleQuoted:   DOCTYPESystemIdentifierSingleQuoted_handler();   break;
+    case State::AfterDOCTYPESystemIdentifier:   AfterDOCTYPESystemIdentifier_handler();   break;
+    case State::BogusDOCTYPE:   BogusDOCTYPE_handler();   break;
+    case State::CDATASection:   CDATASection_handler();   break;
+    case State::CDATASectionBracket:   CDATASectionBracket_handler();   break;
+    case State::CDATASectionEnd:   CDATASectionEnd_handler();   break;
+    case State::CharacterReference:   CharacterReference_handler();   break;
+    case State::NamedCharacterReference:   NamedCharacterReference_handler();   break;
+    case State::AmbiguousAmpersand:   AmbiguousAmpersand_handler();   break;
+    case State::NumericCharacterReference:   NumericCharacterReference_handler();   break;
+    case State::HexadecimalCharacterReferenceStart:   HexadecimalCharacterReferenceStart_handler();   break;
+    case State::DecimalCharacterReferenceStart:   DecimalCharacterReferenceStart_handler();   break;
+    case State::HexadecimalCharacterReference:   HexadecimalCharacterReference_handler();   break;
+    case State::DecimalCharacterReference:   DecimalCharacterReference_handler();   break;
+    case State::NumericCharacterReferenceEnd:   NumericCharacterReferenceEnd_handler();   break;
     }
 }
 
@@ -264,23 +105,22 @@ void HTMLTokenizer::Data_handler()
 */
 {
     consume_next_input_character();
-    switch(m_current_input_character) {
-    case '&':
+    if (m_curr_char == '&') {
         set_return_state_to<State::Data>();
         switch_state_to<State::CharacterReference>();
-        break;
-    case '<':
+    }
+    else if (m_curr_char == '<') {
         switch_state_to<State::TagOpen>();
-        break;
-    case '\0':
+    }
+    else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        emit_character_token(m_current_input_character);
-        break;
-    case Codepoint::end_of_file:
+        emit_character_token(m_curr_char);
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
         emit_end_of_file_token();
-        break;
-    default: // Anything else
-        emit_character_token(m_current_input_character);
+    }
+    else {
+        emit_character_token(m_curr_char);
     }
 }
 
@@ -291,23 +131,22 @@ void HTMLTokenizer::RCDATA_handler()
 */
 {
     consume_next_input_character();
-    switch(m_current_input_character) {
-    case '&':
+    if (m_curr_char == '&') {
         set_return_state_to<State::RCDATA>();
         switch_state_to<State::CharacterReference>();
-        break;
-    case '<':
+    }
+    else if (m_curr_char == '<') {
         switch_state_to<State::RCDATALessThanSign>();
-        break;
-    case '\0':
+    }
+    else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        emit_character_token(m_current_input_character);
-        break;
-    case Codepoint::end_of_file:
+        emit_character_token(m_curr_char);
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
         emit_end_of_file_token();
-        break;
-    default: // Anything else
-        emit_character_token(m_current_input_character);
+    }
+    else {
+        emit_character_token(m_curr_char);
     }
 }
 
@@ -318,17 +157,18 @@ void HTMLTokenizer::RAWTEXT_handler()
 */
 {
     consume_next_input_character();
-    switch (m_current_input_character) {
-    case '<':
+    if (m_curr_char == '<') {
         switch_state_to<State::RAWTEXTLessThanSign>();
-        break;
-    case '\0':
+    }
+    else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
         emit_character_token(Codepoint::replacement_character);
-        
-    case Codepoint::end_of_file:
-    default: // Anything else
-        emit_character_token(m_current_input_character);
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
+        emit_end_of_file_token();
+    }
+    else {
+        emit_character_token(m_curr_char);
     }
 }
 
@@ -338,7 +178,20 @@ void HTMLTokenizer::ScriptData_handler()
     https://html.spec.whatwg.org/#script-data-state
 */
 {   
-
+    consume_next_input_character();
+    if (m_curr_char == '<') {
+        switch_state_to<State::ScriptDataLessThanSign>();
+    }
+    else if (m_curr_char == '\0') {
+        handle_parse_error(ParseError::unexpected_null_character);
+        emit_character_token(Codepoint::replacement_character);
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
+        emit_end_of_file_token();
+    }
+    else {
+        emit_character_token(m_curr_char);
+    }
 }
 
 
@@ -347,25 +200,116 @@ void HTMLTokenizer::PLAINTEXT_handler()
     https://html.spec.whatwg.org/#plaintext-state
 */
 {
-
+    consume_next_input_character();
+    if (m_curr_char == '\0') {
+        handle_parse_error(ParseError::unexpected_null_character);
+        emit_character_token(Codepoint::replacement_character);
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
+        emit_end_of_file_token();
+    }
+    else {
+        emit_character_token(m_curr_char);
+    }
 }
 
 
 void HTMLTokenizer::TagOpen_handler()
+/*
+    https://html.spec.whatwg.org/#tag-open-state
+*/
 {
-
+    consume_next_input_character();
+    if (m_curr_char == '!') {
+        switch_state_to<State::MarkupDeclarationOpen>();
+    }
+    else if (m_curr_char == '/') {
+        switch_state_to<State::EndTagOpen>();
+    }
+    else if (Codepoint::is_ascii_alpha(m_curr_char)) {
+        m_curr_token.initialize<HTMLToken::Type::StartTag>();
+        reconsume_in<State::TagName>();
+    }
+    else if (m_curr_char == '?') {
+        handle_parse_error(ParseError::unexpected_question_mark_instead_of_tag_name);
+        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        reconsume_in<State::BogusComment>();
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
+        handle_parse_error(ParseError::eof_before_tag_name);
+        emit_character_token('<');
+        emit_end_of_file_token();
+    }
+    else {
+        handle_parse_error(ParseError::invalid_first_character_of_tag_name);
+        emit_character_token('<');
+        reconsume_in<State::Data>();
+    }
 }
 
 
 void HTMLTokenizer::EndTagOpen_handler()
+/*
+    https://html.spec.whatwg.org/#end-tag-open-state
+*/
 {
-
+    consume_next_input_character();
+    if (Codepoint::is_ascii_alpha(m_curr_char)) {
+        m_curr_token.initialize<HTMLToken::Type::EndTag>();
+        reconsume_in<State::TagName>();
+    }
+    else if (m_curr_char == '>') {
+        handle_parse_error(ParseError::missing_end_tag_name);
+        switch_state_to<HTMLTokenizer::State::Data>();
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
+        handle_parse_error(ParseError::eof_before_tag_name);
+        emit_character_token('<');
+        emit_character_token('/');
+        emit_end_of_file_token();
+    }
+    else {
+        handle_parse_error(ParseError::invalid_first_character_of_tag_name);
+        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        reconsume_in<State::BogusComment>();
+    }
 }
 
 
 void HTMLTokenizer::TagName_handler()
+/*
+    https://html.spec.whatwg.org/#tag-name-state
+*/
 {
-
+    consume_next_input_character();
+    if (m_curr_char == '\t'
+    ||  m_curr_char == Codepoint::line_feed
+    ||  m_curr_char == Codepoint::form_feed
+    ||  m_curr_char == ' '
+    ) {
+        switch_state_to<State::BeforeAttributeName>();
+    }
+    else if (m_curr_char == '/') {
+        switch_state_to<State::SelfClosingStartTag>();
+    }
+    else if (m_curr_char == '>') {
+        switch_state_to<State::Data>();
+        emit_current_token();
+    }
+    else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
+        m_curr_token.append_character(m_curr_char + 0x0020); // lowercase version
+    }
+    else if (m_curr_char == '\0') {
+        handle_parse_error(ParseError::unexpected_null_character);
+        m_curr_token.append_character(Codepoint::replacement_character);
+    }
+    else if (m_curr_char == Codepoint::end_of_file) {
+        handle_parse_error(ParseError::eof_in_tag);
+        emit_end_of_file_token();
+    }
+    else {
+        m_curr_token.append_character(m_curr_char);
+    }
 }
 
 

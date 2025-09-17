@@ -32,7 +32,7 @@ public:
     };
 
     // clear everything and set type to uninitalized
-    void clear()
+    inline void clear()
     {
         m_type = Type::Uninitialized;
         m_data.clear();
@@ -43,7 +43,7 @@ public:
 
 
     template <HTMLToken::Type T>
-    constexpr void initialize()
+    inline constexpr void initialize()
     {
         static_assert(T != HTMLToken::Type::Uninitialized, "Use clear() to uninitialize an HTMLToken");
 
@@ -52,19 +52,14 @@ public:
         if constexpr (T == Type::DOCTYPE) {
             m_doctype_data = std::make_unique<DOCTYPEData>();
         }
-        else if constexpr (T == Type::StartTag || T == Type::EndTag) {
-            m_self_closing = false;
-        }
-        else if constexpr (T == Type::Comment) {
-
-        }
-        else if constexpr (T == Type::Character) {
-
-        }
-        else if constexpr (T == Type::EndOfFile) {
-
-        }
     }
+
+
+    inline void append_character(char32_t character)
+    {
+        m_data.push_back(character);
+    }
+
 
 
 private:

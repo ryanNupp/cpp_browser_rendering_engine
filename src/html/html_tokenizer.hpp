@@ -104,7 +104,7 @@ private:
     State m_curr_state{ State::Data };
     State m_return_state{ State::Data };
 
-    char32_t m_current_input_character;
+    char32_t m_curr_char;
     bool m_reconsume{ false };
     bool m_is_eof{ false };
 
@@ -142,7 +142,7 @@ private:
             m_reconsume = false;
         }
         else {
-            m_current_input_character = m_input_stream.consume();
+            m_curr_char = m_input_stream.consume();
         }
     }
 
@@ -153,18 +153,13 @@ private:
     }
 
 
-    inline void emit_character_token(char32_t character)
+    inline void emit_character_token(const char32_t character)
     {
+        // TODO: see if m_curr_token is safe to use for character token usage
         HTMLToken tok;
         tok.initialize<HTMLToken::Type::Character>();
-        m_tree_builder.token_dispatch(tok);
-    }
+        tok.append_character(character);
 
-
-    inline void emit_curr_char_as_token()
-    {
-        HTMLToken tok;
-        tok.initialize<HTMLToken::Type::Character>();
         m_tree_builder.token_dispatch(tok);
     }
 
