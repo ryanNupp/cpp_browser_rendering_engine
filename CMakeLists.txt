@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(
-    browser_render
+    browser_render_demo
     #
     LANGUAGES CXX
     VERSION 0.0.1
