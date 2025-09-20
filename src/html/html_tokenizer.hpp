@@ -1,8 +1,12 @@
 #pragma once
 
+#include <vector>
+#include <algorithm>
+
 #include "html/input_stream.hpp"
 #include "html/html_tree_builder.hpp"
 #include "html/html_token.hpp"
+#include "utf_32_util.hpp"
 
 
 class HTMLTokenizer {
@@ -110,6 +114,11 @@ private:
 
     HTMLToken m_curr_token;
 
+    std::vector<char32_t> m_temporary_buffer;
+
+    std::vector<char32_t> m_appropriate_end_tag_name;
+
+    int m_character_reference_code{ 0 };
     
 
     /* tokenizer helper functions */
@@ -121,10 +130,22 @@ private:
     }
 
 
+    inline void switch_to_return_state()
+    {
+        m_curr_state = m_return_state;
+    }
+
+
     template <HTMLTokenizer::State state>
     inline void reconsume_in()
     {
         m_curr_state = state;
+        m_reconsume = true;
+    }
+
+    inline void reconsume_in_return_state()
+    {
+        m_curr_state = m_return_state;
         m_reconsume = true;
     }
 
@@ -147,9 +168,26 @@ private:
     }
 
 
+    inline void consume_many(size_t amount)
+    {
+        m_curr_char = m_input_stream.consume_many(amount);
+    }
+
+
     inline void emit_current_token()
     {
         m_tree_builder.token_dispatch(m_curr_token);
+        // m_curr_token.clear(); // TODO: look into -- clear here??
+    }
+
+
+    inline void emit_current_tag_token()
+    {
+        if (m_curr_token.get_type() == HTMLToken::Type::StartTag) {
+            auto tag_token_name{ m_curr_token.get_tag_name() };
+            m_appropriate_end_tag_name.assign(tag_token_name.begin(), tag_token_name.end());
+        }
+        emit_current_token();
     }
 
 
@@ -158,7 +196,7 @@ private:
         // TODO: see if m_curr_token is safe to use for character token usage
         HTMLToken tok;
         tok.initialize<HTMLToken::Type::Character>();
-        tok.append_character(character);
+        tok.append_data(character);
 
         m_tree_builder.token_dispatch(tok);
     }
@@ -171,6 +209,42 @@ private:
         emit_current_token();
     }
 
+
+    inline void emit_temp_buffer_as_char_tokens()
+    {
+        for (auto ch : m_temporary_buffer) {
+            emit_character_token(ch);
+        }
+    }
+
+
+    inline bool consumed_as_part_of_an_attribute()
+    {
+        return m_return_state == State::AttributeValueDoubleQuoted
+            || m_return_state == State::AttributeValueSingleQuoted
+            || m_return_state == State::AttributeValueUnquoted;
+    }
+
+
+    inline void flush_code_points_as_char_ref()
+    {
+        if (consumed_as_part_of_an_attribute()) {
+            for (auto ch : m_temporary_buffer) {
+                m_curr_token.attribute_value_append(ch);
+            }
+        }
+        else {
+            for (auto ch : m_temporary_buffer) {
+                emit_character_token(ch);
+            }
+        }
+    }
+
+
+    inline bool appropriate_end_tag_token()
+    {
+        return UTF32_Util::utf32_str_equal(m_curr_token.get_tag_name(), m_appropriate_end_tag_name);
+    }
 
 
     /* tokenizer state handler functions */

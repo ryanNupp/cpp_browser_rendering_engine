@@ -1,6 +1,6 @@
 #include <print>
 
-#include <utility.hpp>
+#include "utf_32_util.hpp"
 #include "html/html_tree_builder.hpp"
 
 
@@ -46,3 +46,17 @@ void HTMLTreeBuilder::token_dispatch(HTMLToken& token)
 
     // TODO: flesh out the entirety of the tree builder & document object so this can move to the next step
 }
+
+
+// TODO: streamline token passoff / dispatch:
+//
+//  --  HTMLParser creates HTMLToken m_curr_token object, HTMLTreeBuilder & HTMLTokenizer both have access by reference
+//
+//  --  Since tree builder only accesses token once told to from the tokenizer, tell token_dispatch token type at
+//      compile time
+//
+//  --  Potentially have some seperate specific dispatch functions where necessary, probably for character literals have a
+//      special one using non-type template parameter
+//
+//  --  Probably for character tokens from m_curr_char (known @ runtime) just pass character by parameter,
+//      UNLESS - look into if m_curr_token is safe to use for character tokens, (probably not)

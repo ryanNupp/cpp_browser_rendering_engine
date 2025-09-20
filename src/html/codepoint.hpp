@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <span>
 
 
 namespace Codepoint {
@@ -138,6 +138,37 @@ namespace Codepoint {
     inline bool is_ascii_alphanumeric(char32_t codept)
     {
         return is_ascii_alpha(codept) || is_ascii_digit(codept);
+    }
+
+
+    inline char32_t to_lowercase(char32_t codept)
+    {
+        return codept + 0x0020;
+    }
+
+
+    inline bool is_ascii_case_insensitive_match(std::span<const char32_t> a, std::span<const char32_t> b)
+    {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (auto i{ 0 }; i < a.size(); ++i) {
+            char32_t char_a{ (is_ascii_upper_alpha(a[i])) ? to_lowercase(a[i]) : a[i]};
+            char32_t char_b{ (is_ascii_upper_alpha(b[i])) ? to_lowercase(b[i]) : b[i]};
+            if (char_a != char_b) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    inline bool utf32_str_equal(std::span<const char32_t> a, std::span<const char32_t> b)
+    {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        return std::equal(a.begin(), a.end(), b.begin());
     }
 
 } // namespace Codepoint
