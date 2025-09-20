@@ -3,10 +3,10 @@
 #include <vector>
 #include <algorithm>
 
+#include "html/codepoint.hpp"
 #include "html/input_stream.hpp"
 #include "html/html_tree_builder.hpp"
 #include "html/html_token.hpp"
-#include "utf_32_util.hpp"
 
 
 class HTMLTokenizer {
@@ -243,7 +243,7 @@ private:
 
     inline bool appropriate_end_tag_token()
     {
-        return UTF32_Util::utf32_str_equal(m_curr_token.get_tag_name(), m_appropriate_end_tag_name);
+        return Codepoint::utf32_str_equal(m_curr_token.get_tag_name(), m_appropriate_end_tag_name);
     }
 
 

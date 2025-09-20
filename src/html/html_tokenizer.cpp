@@ -1,11 +1,7 @@
-
-
 #include "html_tokenizer.hpp"
 #include "html/codepoint.hpp"
 #include "html/html_parse_error.hpp"
 #include "html/html_token.hpp"
-#include "utf_32_util.hpp"
-#include <initializer_list>
 
 
 HTMLTokenizer::HTMLTokenizer(InputStream& t_input_stream, HTMLTreeBuilder& t_tree_builder)
