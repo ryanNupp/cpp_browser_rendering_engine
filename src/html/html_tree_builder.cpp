@@ -1,7 +1,19 @@
 #include <print>
 
-#include "utf_32_util.hpp"
 #include "html/html_tree_builder.hpp"
+
+
+
+#include "utf_32_util.hpp"
+void print_char32_array(std::span<const char32_t> char32_array)
+{
+    char char_buf[5];
+    for (auto ch : char32_array) {
+        UTF32_Util::char_utf32_to_utf8(ch, char_buf);
+        std::print("{}", char_buf);
+    }
+    std::println();
+}
 
 
 void HTMLTreeBuilder::token_dispatch(HTMLToken& token)
@@ -19,28 +31,58 @@ void HTMLTreeBuilder::token_dispatch(HTMLToken& token)
 
     case HTMLToken::Type::DOCTYPE:
         std::println("DOCTYPE");
+        std::println("Force quirks: {}", token.m_doctype_data->m_force_quirks);
+        // NAME
+        std::println("Name missing: {}", token.m_doctype_data->m_name_missing);
+        std::print("Name: ");
+        print_char32_array(token.m_data);
+        // PUBLIC IDENTIFIER
+        std::println("Public identifier missing: {}", token.m_doctype_data->m_public_identifier_missing);
+        std::print("Public identifier: ");
+        print_char32_array(token.m_doctype_data->m_public_identifier);
+        // SYSTEM IDENTIFIER
+        std::println("System identifier missing: {}", token.m_doctype_data->m_system_identifier_missing);
+        std::print("System identifier: ");
+        print_char32_array(token.m_doctype_data->m_system_identifier);
         break;
 
     case HTMLToken::Type::StartTag:
-        std::println("Start Tag");
-        break;
-
     case HTMLToken::Type::EndTag:
-        std::println("End Tag");
+        std::println("{}", (token.m_type == HTMLToken::Type::StartTag) ? "Start Tag" : "End Tag" );
+        std::print("Tag name: ");
+        print_char32_array(token.m_data);
+        std::println("Self closing: {}", token.m_self_closing);
+        std::println("Attributes:");
+        for (auto attr : token.m_attributes) {
+            std::print("    Attribute name:  ");
+            print_char32_array(attr.m_name);
+            std::print("    Attribute value: ");
+            print_char32_array(attr.m_value);
+            std::println();
+        }
         break;
 
     case HTMLToken::Type::Comment:
         std::println("Comment");
+        std::print("Data: ");
+        print_char32_array(token.m_data);
         break;
 
     case HTMLToken::Type::Character:
         std::println("Character");
+        {
+            char char_buf[5];
+            UTF32_Util::char_utf32_to_utf8(token.m_data[0], char_buf);
+            std::println("Data: {}", char_buf);
+        }
         break;
 
     case HTMLToken::Type::EndOfFile:
         std::println("End of file");
         break;
     }
+
+    std::println("\n\n\n");
 
     /******************************************************************/
 

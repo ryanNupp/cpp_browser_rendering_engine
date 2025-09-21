@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <algorithm>
 
 #include "html/codepoint.hpp"
 #include "html/input_stream.hpp"
@@ -15,6 +14,11 @@ public:
     explicit HTMLTokenizer(InputStream& t_input_stream, HTMLTreeBuilder& t_tree_builder);
 
     void get_next_token();
+
+    inline bool get_eof_status()
+    {
+        return m_is_eof;
+    }
 
     enum class State {
         Data,
@@ -177,7 +181,7 @@ private:
     inline void emit_current_token()
     {
         m_tree_builder.token_dispatch(m_curr_token);
-        // m_curr_token.clear(); // TODO: look into -- clear here??
+        m_curr_token.clear();
     }
 
 
@@ -207,6 +211,7 @@ private:
         m_curr_token.clear();
         m_curr_token.initialize<HTMLToken::Type::EndOfFile>();
         emit_current_token();
+        m_is_eof = true;
     }
 
 

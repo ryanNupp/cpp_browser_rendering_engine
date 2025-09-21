@@ -68,4 +68,6 @@ void Preprocessor::preprocess()
             m_input_stream.push_back(curr_codepoint);
         }
     }
+
+    m_input_stream.push_back(Codepoint::end_of_file);
 }

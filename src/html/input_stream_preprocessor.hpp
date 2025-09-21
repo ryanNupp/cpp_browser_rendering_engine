@@ -18,8 +18,3 @@ private:
 
     InputStream& m_input_stream;
 };
-
-// this could lowkey just be a function...
-//
-// since preprocess() function is intended to do its thing on another
-// thread inside a loop

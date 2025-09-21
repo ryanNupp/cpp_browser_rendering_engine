@@ -1,10 +1,6 @@
-#include <print>
 #include <thread>
 
-#include "utf_32_util.hpp"
 #include "html/html_parser.hpp"
-#include "bytestream/text_decoder.hpp"
-#include "html/codepoint.hpp"
 
 
 HTMLParser::HTMLParser(const std::string_view t_filepath)
@@ -23,24 +19,9 @@ void HTMLParser::parse()
     std::thread bytestream_thread( &BytestreamSource::read_bytes, &m_bytestream_source );
     std::thread preprocess_thread( &Preprocessor::preprocess, &m_preprocessor );
 
-
-
-    while (true) {
-        char32_t ch = m_input_stream.consume();
-
-        char u8_ch[5];
-
-        if (ch == Codepoint::end_of_file) {
-            std::print("\nEND OF FILE\n");
-            break;
-        }
-        else {
-            UTF32_Util::char_utf32_to_utf8(ch, u8_ch);
-            std::print("{}", u8_ch);
-        }
+    while (m_tokenizer.get_eof_status() == false) {
+        m_tokenizer.get_next_token(); // emitting tokens to treebuilder
     }
-
-
 
     // join threads
     preprocess_thread.join();

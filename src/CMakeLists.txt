@@ -10,4 +10,10 @@ target_sources(render_engine PUBLIC
     bytestream/bytestream.cpp
     bytestream/io_queue.cpp
     bytestream/text_decoder.cpp
+
+    html/html_parser.cpp
+    html/html_tokenizer.cpp
+    html/html_tree_builder.cpp
+    html/input_stream_preprocessor.cpp
+    html/input_stream.cpp
 )

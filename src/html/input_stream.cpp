@@ -39,7 +39,7 @@ std::vector<char32_t> InputStream::peek_many(size_t amount)
 
     m_cond_var.wait(lock, [this, amount]() { return m_is_eof || !(m_codept_buffer.size() < amount); });
 
-    if (m_codept_buffer.size() == amount) {
+    if (m_codept_buffer.size() >= amount) {
         return std::vector<char32_t>{
             m_codept_buffer.begin(),
             std::next(m_codept_buffer.begin(), amount)

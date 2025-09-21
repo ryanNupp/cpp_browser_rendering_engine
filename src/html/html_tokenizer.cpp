@@ -11,7 +11,7 @@ HTMLTokenizer::HTMLTokenizer(InputStream& t_input_stream, HTMLTreeBuilder& t_tre
 
 
 void HTMLTokenizer::get_next_token()
-{
+{ 
     switch (m_curr_state) {
     case State::Data:   Data_handler();   break;
     case State::RCDATA:   RCDATA_handler();   break;
@@ -665,7 +665,7 @@ void HTMLTokenizer::ScriptDataDoubleEscapeStart_handler()
     ||  m_curr_char == '>'
     ) {
         constexpr std::array<char32_t, 6> string = {'s', 't', 'r', 'i', 'n', 'g'};
-        if (UTF32_Util::utf32_str_equal(m_temporary_buffer, string)) {
+        if (Codepoint::utf32_str_equal(m_temporary_buffer, string)) {
             switch_state_to<State::ScriptDataDoubleEscaped>();
         }
         else {
@@ -794,7 +794,7 @@ void HTMLTokenizer::ScriptDataDoubleEscapeEnd_handler()
     ||  m_curr_char == '>'
     ) {
         constexpr char32_t string[] = {'s', 't', 'r', 'i', 'n', 'g'};
-        if (UTF32_Util::utf32_str_equal(m_temporary_buffer, string)) {
+        if (Codepoint::utf32_str_equal(m_temporary_buffer, string)) {
             switch_state_to<State::ScriptDataEscaped>();
         }
         else {
@@ -1114,8 +1114,10 @@ void HTMLTokenizer::BogusComment_handler()
 
 void HTMLTokenizer::MarkupDeclarationOpen_handler()
 {
-    if (UTF32_Util::utf32_str_equal(m_input_stream.peek_many(2), {{'-','-'}})) {
-
+    if (Codepoint::utf32_str_equal(m_input_stream.peek_many(2), {{'-','-'}})) {
+        consume_many(2);
+        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        switch_state_to<State::CommentStart>();
         return;
     }
     
@@ -1127,9 +1129,10 @@ void HTMLTokenizer::MarkupDeclarationOpen_handler()
         consume_many(7);
         switch_state_to<State::DOCTYPE>();
     }
-    else if (UTF32_Util::utf32_str_equal(next_7_chars, cdata)) {
+    else if (Codepoint::utf32_str_equal(next_7_chars, cdata)) {
         consume_many(7);
-        if (/* adjusted current node && it's not an element in the HTML namespace */) {
+        // TODO: if - adjusted current node && it's not an element in the HTML namespace
+        if (true) {
             switch_state_to<State::CDATASection>();
         }
         else {
