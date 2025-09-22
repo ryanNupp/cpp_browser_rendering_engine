@@ -6,9 +6,8 @@
 HTMLParser::HTMLParser(const std::string_view t_filepath)
     : m_bytestream_source{ t_filepath, m_io_queue }
     , m_preprocessor{ m_io_queue, m_input_stream }
-    //, m_token{ }
-    //, m_tree_builder{ m_token }
-    , m_tokenizer{ m_input_stream, m_tree_builder }
+    , m_tree_builder{ m_token }
+    , m_tokenizer{ m_input_stream, m_token, m_tree_builder }
 {}
 
 

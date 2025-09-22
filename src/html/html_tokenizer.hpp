@@ -11,7 +11,8 @@
 class HTMLTokenizer {
 public:
 
-    explicit HTMLTokenizer(InputStream& t_input_stream, HTMLTreeBuilder& t_tree_builder);
+    explicit HTMLTokenizer(InputStream& t_input_stream, HTMLToken& t_token,
+                           HTMLTreeBuilder& t_tree_builder );
 
     void get_next_token();
 
@@ -116,7 +117,7 @@ private:
     bool m_reconsume{ false };
     bool m_is_eof{ false };
 
-    HTMLToken m_curr_token;
+    HTMLToken& m_token;
 
     std::vector<char32_t> m_temporary_buffer;
 
@@ -164,40 +165,36 @@ private:
         }
     }
 
-    inline void consume_many(size_t amount)
+    inline void consume_many(const size_t amount)
     {
         m_curr_char = m_input_stream.consume_many(amount);
     }
 
     inline void emit_current_token()
     {
-        m_tree_builder.token_dispatch(m_curr_token);
-        m_curr_token.clear();
+        m_tree_builder.receive_token();
+        m_token.clear();
     }
 
     inline void emit_current_tag_token()
     {
-        if (m_curr_token.get_type() == HTMLToken::Type::StartTag) {
-            auto tag_token_name{ m_curr_token.get_tag_name() };
-            m_appropriate_end_tag_name.assign(tag_token_name.begin(), tag_token_name.end());
+        if (m_token.get_type() == HTMLToken::Type::StartTag) {
+            auto tag_token_name{ m_token.get_tag_name() };
+            m_appropriate_end_tag_name.assign(tag_token_name.begin(),
+                                              tag_token_name.end()   );
         }
         emit_current_token();
     }
 
     inline void emit_character_token(const char32_t character)
     {
-        // TODO: see if m_curr_token is safe to use for character token usage
-        HTMLToken tok;
-        tok.initialize<HTMLToken::Type::Character>();
-        tok.append_data(character);
-
-        m_tree_builder.token_dispatch(tok);
+        m_tree_builder.receive_character_token(character);
     }
 
     inline void emit_end_of_file_token()
     {
-        m_curr_token.clear();
-        m_curr_token.initialize<HTMLToken::Type::EndOfFile>();
+        m_token.clear();
+        m_token.initialize<HTMLToken::Type::EndOfFile>();
         emit_current_token();
         m_is_eof = true;
     }
@@ -220,7 +217,7 @@ private:
     {
         if (consumed_as_part_of_an_attribute()) {
             for (auto ch : m_temporary_buffer) {
-                m_curr_token.attribute_value_append(ch);
+                m_token.attribute_value_append(ch);
             }
         }
         else {
@@ -232,7 +229,8 @@ private:
 
     inline bool appropriate_end_tag_token()
     {
-        return Codepoint::utf32_str_equal(m_curr_token.get_tag_name(), m_appropriate_end_tag_name);
+        return Codepoint::utf32_str_equal(m_token.get_tag_name(),
+                                          m_appropriate_end_tag_name   );
     }
 
 

@@ -7,10 +7,14 @@
 
 class HTMLTreeBuilder {
 public:
-    // HTMLTreeBuilder(Document t_document);
+    HTMLTreeBuilder(HTMLToken& t_token);
 
-    void token_dispatch(HTMLToken& token);
+    void receive_character_token(char32_t character);
+
+    void receive_token();
 
 private:
+    HTMLToken& m_token;
+
     // Document m_document;   // The model of our document (the DOM)
 };

@@ -65,7 +65,7 @@ private:
 
     BytestreamSource m_bytestream_source;
     Preprocessor m_preprocessor;
-    //HTMLToken m_token;
+    HTMLToken m_token;
     HTMLTreeBuilder m_tree_builder;
     HTMLTokenizer m_tokenizer;
 

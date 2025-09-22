@@ -4,8 +4,9 @@
 #include "html/html_token.hpp"
 
 
-HTMLTokenizer::HTMLTokenizer(InputStream& t_input_stream, HTMLTreeBuilder& t_tree_builder)
+HTMLTokenizer::HTMLTokenizer(InputStream& t_input_stream, HTMLToken& t_token, HTMLTreeBuilder& t_tree_builder)
     : m_input_stream{ t_input_stream }
+    , m_token{ t_token }
     , m_tree_builder{ t_tree_builder }
 {}
 
@@ -210,12 +211,12 @@ void HTMLTokenizer::TagOpen_handler()
         switch_state_to(State::EndTagOpen);
     }
     else if (Codepoint::is_ascii_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::StartTag>();
+        m_token.initialize<HTMLToken::Type::StartTag>();
         reconsume_in(State::TagName);
     }
     else if (m_curr_char == '?') {
         handle_parse_error(ParseError::unexpected_question_mark_instead_of_tag_name);
-        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        m_token.initialize<HTMLToken::Type::Comment>();
         reconsume_in(State::BogusComment);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
@@ -235,7 +236,7 @@ void HTMLTokenizer::EndTagOpen_handler()
 {
     consume_next_input_character();
     if (Codepoint::is_ascii_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::EndTag>();
+        m_token.initialize<HTMLToken::Type::EndTag>();
         reconsume_in(State::TagName);
     }
     else if (m_curr_char == '>') {
@@ -250,7 +251,7 @@ void HTMLTokenizer::EndTagOpen_handler()
     }
     else {
         handle_parse_error(ParseError::invalid_first_character_of_tag_name);
-        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        m_token.initialize<HTMLToken::Type::Comment>();
         reconsume_in(State::BogusComment);
     }
 }
@@ -273,18 +274,18 @@ void HTMLTokenizer::TagName_handler()
         emit_current_token();
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_data(Codepoint::replacement_character);
+        m_token.append_data(Codepoint::replacement_character);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_tag);
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
     }
 }
 
@@ -307,7 +308,7 @@ void HTMLTokenizer::RCDATAEndTagOpen_handler()
 {
     consume_next_input_character();
     if (Codepoint::is_ascii_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::EndTag>();
+        m_token.initialize<HTMLToken::Type::EndTag>();
         reconsume_in(State::RCDATAEndTagName);
     }
     else {
@@ -336,11 +337,11 @@ void HTMLTokenizer::RCDATAEndTagName_handler()
         switch_state_to(State::BeforeAttributeName);
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
         m_temporary_buffer.push_back(m_curr_char);
     }
     else if (Codepoint::is_ascii_lower_alpha(m_curr_char)) {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
         m_temporary_buffer.push_back(m_curr_char);
     }
     else {
@@ -370,7 +371,7 @@ void HTMLTokenizer::RAWTEXTEndTagOpen_handler()
 {
     consume_next_input_character();
     if (Codepoint::is_ascii_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::EndTag>();
+        m_token.initialize<HTMLToken::Type::EndTag>();
         reconsume_in(State::RAWTEXTEndTagName);
     }
     else {
@@ -399,11 +400,11 @@ void HTMLTokenizer::RAWTEXTEndTagName_handler()
         switch_state_to(State::Data);
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
         m_temporary_buffer.push_back(m_curr_char);
     }
     else if (Codepoint::is_ascii_lower_alpha(m_curr_char)) {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
         m_temporary_buffer.push_back(m_curr_char);
     }
     else {
@@ -437,7 +438,7 @@ void HTMLTokenizer::ScriptDataEndTagOpen_handler()
 {
     consume_next_input_character();
     if (Codepoint::is_ascii_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::EndTag>();
+        m_token.initialize<HTMLToken::Type::EndTag>();
         reconsume_in(State::ScriptData);
     }
     else {
@@ -466,11 +467,11 @@ void HTMLTokenizer::ScriptDataEndTagName_handler()
         switch_state_to(State::Data);
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
         m_temporary_buffer.push_back(m_curr_char);
     }
     else if (Codepoint::is_ascii_lower_alpha(m_curr_char)) {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
         m_temporary_buffer.push_back(m_curr_char);
     }
     else {
@@ -609,7 +610,7 @@ void HTMLTokenizer::ScriptDataEscapedEndTagOpen_handler()
 {
     consume_next_input_character();
     if (Codepoint::is_ascii_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::EndTag>();
+        m_token.initialize<HTMLToken::Type::EndTag>();
         reconsume_in(State::ScriptDataEscapedEndTagName);
     }
     else {
@@ -638,11 +639,11 @@ void HTMLTokenizer::ScriptDataEscapedEndTagName_handler()
         switch_state_to(State::Data);
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
         m_temporary_buffer.push_back(m_curr_char);
     }
     else if (Codepoint::is_ascii_lower_alpha(m_curr_char)) {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
         m_temporary_buffer.push_back(m_curr_char);
     }
     else {
@@ -834,11 +835,11 @@ void HTMLTokenizer::BeforeAttributeName_handler()
     }
     else if (m_curr_char == '=') {
         handle_parse_error(ParseError::unexpected_equals_sign_before_attribute_name);
-        m_curr_token.start_new_attribute();
+        m_token.start_new_attribute();
         switch_state_to(State::AttributeName);
     }
     else {
-        m_curr_token.start_new_attribute();
+        m_token.start_new_attribute();
         reconsume_in(State::AttributeName);
     }
 }
@@ -861,11 +862,11 @@ void HTMLTokenizer::AttributeName_handler()
         switch_state_to(State::BeforeAttributeValue);
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.attribute_name_append(Codepoint::to_lowercase(m_curr_char));
+        m_token.attribute_name_append(Codepoint::to_lowercase(m_curr_char));
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.attribute_name_append(Codepoint::replacement_character);
+        m_token.attribute_name_append(Codepoint::replacement_character);
     }
     else {
         if (m_curr_char == '"'
@@ -874,7 +875,7 @@ void HTMLTokenizer::AttributeName_handler()
         ) {
             handle_parse_error(ParseError::unexpected_character_in_attribute_name);
         }
-        m_curr_token.attribute_name_append(m_curr_char);
+        m_token.attribute_name_append(m_curr_char);
     }
     /*
         ---------------------------------------------------------------------------------------
@@ -923,7 +924,7 @@ void HTMLTokenizer::AfterAttributeName_handler()
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.start_new_attribute();
+        m_token.start_new_attribute();
         reconsume_in(State::AttributeName);
     }
 }
@@ -968,14 +969,14 @@ void HTMLTokenizer::AttributeValueDoubleQuoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.attribute_value_append(Codepoint::replacement_character);
+        m_token.attribute_value_append(Codepoint::replacement_character);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_tag);
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.attribute_value_append(m_curr_char);
+        m_token.attribute_value_append(m_curr_char);
     }
 }
 
@@ -992,14 +993,14 @@ void HTMLTokenizer::AttributeValueSingleQuoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.attribute_value_append(Codepoint::replacement_character);
+        m_token.attribute_value_append(Codepoint::replacement_character);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_tag);
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.attribute_value_append(m_curr_char);
+        m_token.attribute_value_append(m_curr_char);
     }
 }
 
@@ -1023,7 +1024,7 @@ void HTMLTokenizer::AttributeValueUnquoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.attribute_value_append(Codepoint::replacement_character);
+        m_token.attribute_value_append(Codepoint::replacement_character);
     }
     else if (m_curr_char == '"'
          ||  m_curr_char == '\''
@@ -1032,14 +1033,14 @@ void HTMLTokenizer::AttributeValueUnquoted_handler()
          ||  m_curr_char == '`'
     ) {
         handle_parse_error(ParseError::unexpected_character_in_unquoted_attribute_value);
-        m_curr_token.attribute_value_append(m_curr_char);
+        m_token.attribute_value_append(m_curr_char);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_tag);
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.attribute_value_append(m_curr_char);
+        m_token.attribute_value_append(m_curr_char);
     }
 }
 
@@ -1076,7 +1077,7 @@ void HTMLTokenizer::SelfClosingStartTag_handler()
 {
     consume_next_input_character();
     if (m_curr_char == '>') {
-        m_curr_token.set_self_closing_flag();
+        m_token.set_self_closing_flag();
         switch_state_to(State::Data);
         emit_current_tag_token();
     }
@@ -1104,10 +1105,10 @@ void HTMLTokenizer::BogusComment_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_data(Codepoint::replacement_character);
+        m_token.append_data(Codepoint::replacement_character);
     }
     else {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
     }
 }
 
@@ -1116,7 +1117,7 @@ void HTMLTokenizer::MarkupDeclarationOpen_handler()
 {
     if (Codepoint::utf32_str_equal(m_input_stream.peek_many(2), {{'-','-'}})) {
         consume_many(2);
-        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        m_token.initialize<HTMLToken::Type::Comment>();
         switch_state_to(State::CommentStart);
         return;
     }
@@ -1137,14 +1138,14 @@ void HTMLTokenizer::MarkupDeclarationOpen_handler()
         }
         else {
             handle_parse_error(ParseError::cdata_in_html_content);
-            m_curr_token.initialize<HTMLToken::Type::Comment>();
-            m_curr_token.append_data_multiple(cdata);
+            m_token.initialize<HTMLToken::Type::Comment>();
+            m_token.append_data_multiple(cdata);
             switch_state_to(State::BogusComment);
         }
     }
     else {
         handle_parse_error(ParseError::incorrectly_opened_comment);
-        m_curr_token.initialize<HTMLToken::Type::Comment>();
+        m_token.initialize<HTMLToken::Type::Comment>();
         switch_state_to(State::BogusComment);
     }
 }
@@ -1184,7 +1185,7 @@ void HTMLTokenizer::CommentStartDash_handler()
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data('-');
+        m_token.append_data('-');
         reconsume_in(State::Comment);
     }
 }
@@ -1194,7 +1195,7 @@ void HTMLTokenizer::Comment_handler()
 {
     consume_next_input_character();
     if (m_curr_char == '<') {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
         switch_state_to(State::CommentLessThanSign);
     }
     else if (m_curr_char == '-') {
@@ -1202,7 +1203,7 @@ void HTMLTokenizer::Comment_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_data(Codepoint::replacement_character);
+        m_token.append_data(Codepoint::replacement_character);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_comment);
@@ -1210,7 +1211,7 @@ void HTMLTokenizer::Comment_handler()
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
     }
 }
 
@@ -1219,11 +1220,11 @@ void HTMLTokenizer::CommentLessThanSign_handler()
 {
     consume_next_input_character();
     if (m_curr_char == '!') {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
         switch_state_to(State::CommentLessThanSignBang);
     }
     else if (m_curr_char == '<') {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
     }
     else {
         reconsume_in(State::Comment);
@@ -1280,7 +1281,7 @@ void HTMLTokenizer::CommentEndDash_handler()
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data('-');
+        m_token.append_data('-');
         reconsume_in(State::Comment);
     }
 }
@@ -1297,7 +1298,7 @@ void HTMLTokenizer::CommentEnd_handler()
         switch_state_to(State::CommentEndBang);
     }
     else if (m_curr_char == '-') {
-        m_curr_token.append_data('-');
+        m_token.append_data('-');
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_comment);
@@ -1305,7 +1306,7 @@ void HTMLTokenizer::CommentEnd_handler()
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data_multiple({{'-','-'}});
+        m_token.append_data_multiple({{'-','-'}});
         reconsume_in(State::Comment);
     }
 }
@@ -1315,7 +1316,7 @@ void HTMLTokenizer::CommentEndBang_handler()
 {
     consume_next_input_character();
     if (m_curr_char == '-') {
-        m_curr_token.append_data_multiple({{'-','-','!'}});
+        m_token.append_data_multiple({{'-','-','!'}});
         reconsume_in(State::CommentEndDash);
     }
     else if (m_curr_char == '>') {
@@ -1329,7 +1330,7 @@ void HTMLTokenizer::CommentEndBang_handler()
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data_multiple({{'-','-','!'}});
+        m_token.append_data_multiple({{'-','-','!'}});
         reconsume_in(State::Comment);
     }
 }
@@ -1350,8 +1351,8 @@ void HTMLTokenizer::DOCTYPE_handler()
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.initialize<HTMLToken::Type::DOCTYPE>();
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.initialize<HTMLToken::Type::DOCTYPE>();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
@@ -1373,33 +1374,33 @@ void HTMLTokenizer::BeforeDOCTYPEName_handler()
         // ignore the character
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.initialize<HTMLToken::Type::DOCTYPE>();
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.initialize<HTMLToken::Type::DOCTYPE>();
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
         switch_state_to(State::DOCTYPEName);
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.initialize<HTMLToken::Type::DOCTYPE>();
-        m_curr_token.append_data(Codepoint::replacement_character);
+        m_token.initialize<HTMLToken::Type::DOCTYPE>();
+        m_token.append_data(Codepoint::replacement_character);
         switch_state_to(State::DOCTYPEName);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::missing_doctype_name);
-        m_curr_token.initialize<HTMLToken::Type::DOCTYPE>();
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.initialize<HTMLToken::Type::DOCTYPE>();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.initialize<HTMLToken::Type::DOCTYPE>();
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.initialize<HTMLToken::Type::DOCTYPE>();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.initialize<HTMLToken::Type::DOCTYPE>();
-        m_curr_token.append_data(m_curr_char);
+        m_token.initialize<HTMLToken::Type::DOCTYPE>();
+        m_token.append_data(m_curr_char);
         switch_state_to(State::DOCTYPEName);
     }
 }
@@ -1420,20 +1421,20 @@ void HTMLTokenizer::DOCTYPEName_handler()
         emit_current_token();
     }
     else if (Codepoint::is_ascii_upper_alpha(m_curr_char)) {
-        m_curr_token.append_data(Codepoint::to_lowercase(m_curr_char));
+        m_token.append_data(Codepoint::to_lowercase(m_curr_char));
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_data(Codepoint::replacement_character);
+        m_token.append_data(Codepoint::replacement_character);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_data(m_curr_char);
+        m_token.append_data(m_curr_char);
     }
 }
 
@@ -1454,7 +1455,7 @@ void HTMLTokenizer::AfterDOCTYPEName_handler()
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
@@ -1473,7 +1474,7 @@ void HTMLTokenizer::AfterDOCTYPEName_handler()
         }
         else {
             handle_parse_error(ParseError::invalid_character_sequence_after_doctype_name);
-            m_curr_token.set_doctype_force_quirks_flag();
+            m_token.set_doctype_force_quirks_flag();
             reconsume_in(State::BogusDOCTYPE);
         }
     }
@@ -1492,29 +1493,29 @@ void HTMLTokenizer::AfterDOCTYPEPublicKeyword_handler()
     }
     else if (m_curr_char == '"') {
         handle_parse_error(ParseError::missing_whitespace_after_doctype_public_keyword);
-        m_curr_token.set_doctype_public_identifier_not_missing();
+        m_token.set_doctype_public_identifier_not_missing();
         switch_state_to(State::DOCTYPEPublicIdentifierDoubleQuoted);
     }
     else if (m_curr_char == '\'') {
         handle_parse_error(ParseError::missing_whitespace_after_doctype_public_keyword);
-        m_curr_token.set_doctype_public_identifier_not_missing();
+        m_token.set_doctype_public_identifier_not_missing();
         switch_state_to(State::DOCTYPEPublicIdentifierSingleQuoted);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::missing_doctype_public_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_tag_token();
         emit_end_of_file_token();
     }
     else {
         handle_parse_error(ParseError::missing_quote_before_doctype_public_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         reconsume_in(State::BogusDOCTYPE);
     }
 }
@@ -1531,28 +1532,28 @@ void HTMLTokenizer::BeforeDOCTYPEPublicIdentifier_handler()
         // ignore the character
     }
     else if (m_curr_char == '"') {
-        m_curr_token.set_doctype_public_identifier_not_missing();
+        m_token.set_doctype_public_identifier_not_missing();
         switch_state_to(State::DOCTYPEPublicIdentifierDoubleQuoted);
     }
     else if (m_curr_char == '\'') {
-        m_curr_token.set_doctype_public_identifier_not_missing();
+        m_token.set_doctype_public_identifier_not_missing();
         switch_state_to(State::DOCTYPEPublicIdentifierSingleQuoted);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::missing_doctype_public_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_tag_token();
         emit_end_of_file_token();
     }
     else {
         handle_parse_error(ParseError::missing_quote_before_doctype_public_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         reconsume_in(State::BogusDOCTYPE);
     }
 }
@@ -1566,22 +1567,22 @@ void HTMLTokenizer::DOCTYPEPublicIdentifierDoubleQuoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_doctype_public_identifier(Codepoint::replacement_character);
+        m_token.append_doctype_public_identifier(Codepoint::replacement_character);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::abrupt_doctype_public_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_doctype_public_identifier(m_curr_char);
+        m_token.append_doctype_public_identifier(m_curr_char);
     }
 }
 
@@ -1594,22 +1595,22 @@ void HTMLTokenizer::DOCTYPEPublicIdentifierSingleQuoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_doctype_public_identifier(Codepoint::replacement_character);
+        m_token.append_doctype_public_identifier(Codepoint::replacement_character);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::abrupt_doctype_public_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_doctype_public_identifier(m_curr_char);
+        m_token.append_doctype_public_identifier(m_curr_char);
     }
 }
 
@@ -1630,23 +1631,23 @@ void HTMLTokenizer::AfterDOCTYPEPublicIdentifier_handler()
     }
     else if (m_curr_char == '"') {
         handle_parse_error(ParseError::missing_whitespace_between_doctype_public_and_system_identifiers);
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierDoubleQuoted);
     }
     else if (m_curr_char == '\'') {
         handle_parse_error(ParseError::missing_whitespace_between_doctype_public_and_system_identifiers);
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierSingleQuoted);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
         handle_parse_error(ParseError::missing_quote_before_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         reconsume_in(State::BogusDOCTYPE);
     }
 }
@@ -1667,22 +1668,22 @@ void HTMLTokenizer::BetweenDOCTYPEPublicAndSystemIdentifiers_handler()
         emit_current_token();
     }
     else if (m_curr_char == '"') {
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierDoubleQuoted);
     }
     else if (m_curr_char == '\'') {
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierSingleQuoted);
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
         handle_parse_error(ParseError::missing_quote_before_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         reconsume_in(State::BogusDOCTYPE);
     }
 }
@@ -1700,7 +1701,7 @@ void HTMLTokenizer::AfterDOCTYPESystemKeyword_handler()
     }
     else if (m_curr_char == '"') {
         handle_parse_error(ParseError::missing_whitespace_after_doctype_system_keyword);
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierDoubleQuoted);
     }
     else if (m_curr_char == '\'') {
@@ -1709,19 +1710,19 @@ void HTMLTokenizer::AfterDOCTYPESystemKeyword_handler()
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::missing_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
         handle_parse_error(ParseError::missing_quote_before_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         reconsume_in(State::BogusDOCTYPE);
     }
 }
@@ -1738,28 +1739,28 @@ void HTMLTokenizer::BeforeDOCTYPESystemIdentifier_handler()
         // ignore the character
     }
     else if (m_curr_char == '"') {
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierDoubleQuoted);
     }
     else if (m_curr_char == '\'') {
-        m_curr_token.set_doctype_system_identifier_not_missing();
+        m_token.set_doctype_system_identifier_not_missing();
         switch_state_to(State::DOCTYPESystemIdentifierSingleQuoted);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::missing_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
         handle_parse_error(ParseError::missing_quote_before_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         reconsume_in(State::BogusDOCTYPE);
     }
 }
@@ -1773,22 +1774,22 @@ void HTMLTokenizer::DOCTYPESystemIdentifierDoubleQuoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_doctype_system_identifier(m_curr_char);
+        m_token.append_doctype_system_identifier(m_curr_char);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::abrupt_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_doctype_system_identifier(m_curr_char);
+        m_token.append_doctype_system_identifier(m_curr_char);
     }
 }
 
@@ -1801,22 +1802,22 @@ void HTMLTokenizer::DOCTYPESystemIdentifierSingleQuoted_handler()
     }
     else if (m_curr_char == '\0') {
         handle_parse_error(ParseError::unexpected_null_character);
-        m_curr_token.append_doctype_system_identifier(Codepoint::replacement_character);
+        m_token.append_doctype_system_identifier(Codepoint::replacement_character);
     }
     else if (m_curr_char == '>') {
         handle_parse_error(ParseError::abrupt_doctype_system_identifier);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         switch_state_to(State::Data);
         emit_current_token();
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
     else {
-        m_curr_token.append_doctype_system_identifier(m_curr_char);
+        m_token.append_doctype_system_identifier(m_curr_char);
     }
 }
 
@@ -1836,7 +1837,7 @@ void HTMLTokenizer::AfterDOCTYPESystemIdentifier_handler()
     }
     else if (m_curr_char == Codepoint::end_of_file) {
         handle_parse_error(ParseError::eof_in_doctype);
-        m_curr_token.set_doctype_force_quirks_flag();
+        m_token.set_doctype_force_quirks_flag();
         emit_current_token();
         emit_end_of_file_token();
     }
@@ -1944,7 +1945,7 @@ void HTMLTokenizer::AmbiguousAmpersand_handler()
     consume_next_input_character();
     if (Codepoint::is_ascii_alphanumeric(m_curr_char)) {
         if (consumed_as_part_of_an_attribute()) {
-            m_curr_token.attribute_value_append(m_curr_char);
+            m_token.attribute_value_append(m_curr_char);
         }
         else {
             emit_character_token(m_curr_char);
