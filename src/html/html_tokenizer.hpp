@@ -127,21 +127,17 @@ private:
 
     /* tokenizer helper functions */
 
-    template <HTMLTokenizer::State state>
-    inline void switch_state_to()
+    inline void switch_state_to(HTMLTokenizer::State state)
     {
         m_curr_state = state;
     }
-
 
     inline void switch_to_return_state()
     {
         m_curr_state = m_return_state;
     }
 
-
-    template <HTMLTokenizer::State state>
-    inline void reconsume_in()
+    inline void reconsume_in(HTMLTokenizer::State state)
     {
         m_curr_state = state;
         m_reconsume = true;
@@ -153,13 +149,10 @@ private:
         m_reconsume = true;
     }
 
-
-    template <HTMLTokenizer::State state>
-    inline void set_return_state_to()
+    inline void set_return_state_to(HTMLTokenizer::State state)
     {
         m_return_state = state;
     }
-
 
     inline void consume_next_input_character()
     {
@@ -171,19 +164,16 @@ private:
         }
     }
 
-
     inline void consume_many(size_t amount)
     {
         m_curr_char = m_input_stream.consume_many(amount);
     }
-
 
     inline void emit_current_token()
     {
         m_tree_builder.token_dispatch(m_curr_token);
         m_curr_token.clear();
     }
-
 
     inline void emit_current_tag_token()
     {
@@ -193,7 +183,6 @@ private:
         }
         emit_current_token();
     }
-
 
     inline void emit_character_token(const char32_t character)
     {
@@ -205,7 +194,6 @@ private:
         m_tree_builder.token_dispatch(tok);
     }
 
-
     inline void emit_end_of_file_token()
     {
         m_curr_token.clear();
@@ -214,7 +202,6 @@ private:
         m_is_eof = true;
     }
 
-
     inline void emit_temp_buffer_as_char_tokens()
     {
         for (auto ch : m_temporary_buffer) {
@@ -222,14 +209,12 @@ private:
         }
     }
 
-
     inline bool consumed_as_part_of_an_attribute()
     {
         return m_return_state == State::AttributeValueDoubleQuoted
             || m_return_state == State::AttributeValueSingleQuoted
             || m_return_state == State::AttributeValueUnquoted;
     }
-
 
     inline void flush_code_points_as_char_ref()
     {
@@ -244,7 +229,6 @@ private:
             }
         }
     }
-
 
     inline bool appropriate_end_tag_token()
     {
